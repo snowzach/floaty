@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Floaty Stats</string>
+    <string name="floaty_dash">Floaty Stats</string>
+    <string name="stats_header">  Floaty Stats  </string>
+    <string name="pip">Open Stats Floating Window</string>
+    <string name="exit">Exit</string>
+    <string name="log">Log</string>
+</resources>
