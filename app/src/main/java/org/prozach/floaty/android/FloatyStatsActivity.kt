@@ -14,6 +14,7 @@ import android.os.IBinder
 import android.provider.Settings
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.Gson
 import org.prozach.floaty.android.databinding.ActivityFloatyStatsBinding
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -74,8 +75,18 @@ class FloatyStatsActivity : AppCompatActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             Timber.d("onReceive")
             runOnUiThread {
-                binding.logTextView.text =  intent.getStringExtra("data")
+                val vescValuesJSON = intent.getStringExtra("vescValues")
+                if(!vescValuesJSON.isNullOrEmpty()) {
+                    var vescValues: FloatyStatsService.VescValues = Gson().fromJson(vescValuesJSON, FloatyStatsService.VescValues::class.java)
+                    binding.logTextView.text = vescValues.toString()
+                }
+                val vescFloatValuesJSON = intent.getStringExtra("vescFloatValues")
+                if(!vescFloatValuesJSON.isNullOrEmpty()) {
+                    var vescFloatValues: FloatyStatsService.VescFloatValues = Gson().fromJson(vescFloatValuesJSON, FloatyStatsService.VescFloatValues::class.java)
+                    binding.logTextView2.text = vescFloatValues.toString()
+                }
             }
+
         }
     }
 

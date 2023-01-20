@@ -49,30 +49,53 @@
             android:textColor="@android:color/primary_text_light"
             android:textSize="24sp" />
 
+        <TextView
+            android:id="@+id/log_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/log"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="500px"
             android:orientation="horizontal"
             android:paddingBottom="4dp">
 
-                <TextView
-                    android:id="@+id/log_title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/log"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
 
             <ScrollView
                 android:id="@+id/log_scroll_view"
                 android:layout_width="0dp"
-                android:layout_height="578dp"
+                android:layout_height="284dp"
                 android:layout_weight="1"
                 android:padding="4dp">
 
                 <TextView
                     android:id="@+id/log_text_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="bottom"
+                    android:scrollbars="vertical" />
+
+            </ScrollView>
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="600px"
+            android:orientation="horizontal"
+            android:paddingBottom="4dp">
+
+            <ScrollView
+                android:id="@+id/log_scroll_view2"
+                android:layout_width="0dp"
+                android:layout_height="405dp"
+                android:layout_weight="1"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/log_text_view2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="bottom"

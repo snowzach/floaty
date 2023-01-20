@@ -53,6 +53,14 @@
             android:text="Scan For Devices"
             />
 
+        <Button
+            android:id="@+id/demo_page"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Demo Page"
+            />
+
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/scan_results_recycler_view"
             android:layout_width="match_parent"

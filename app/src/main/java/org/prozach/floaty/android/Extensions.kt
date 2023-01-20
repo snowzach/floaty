@@ -1,6 +1,8 @@
 package org.prozach.floaty.android
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.Paint
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast

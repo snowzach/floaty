@@ -81,6 +81,12 @@ class MainActivity : AppCompatActivity() {
             Timber.plant(Timber.DebugTree())
         }
         binding.scanButton.setOnClickListener { if (isScanning) stopBleScan() else startBleScan() }
+
+        binding.demoPage.setOnClickListener {
+            val intent = Intent(this, DemoPageActivity::class.java)
+            startActivity(intent)
+        }
+
         setupRecyclerView()
     }
 

@@ -25,6 +25,7 @@ class FloatyStatsService : Service() {
     private val vescMainUUID = java.util.UUID.fromString("6e400003-b5a3-f393-e0a9-e50e24dcca9e")
     private val vescCommandUUID = java.util.UUID.fromString("6e400002-b5a3-f393-e0a9-e50e24dcca9e")
     private val vescCommandGetValues = ubyteArrayOf(0x04u)
+    private val vescCommandGetBalanceValues = ubyteArrayOf(0x24u, 0x65u, 0x01u)
     private val CHANNEL_ID = "Floaty"
 
     private val timer: Timer = Timer()
@@ -40,6 +41,7 @@ class FloatyStatsService : Service() {
     }
     private var notifyingCharacteristics = mutableListOf<UUID>()
 
+    // https://github.com/vedderb/bldc/blob/a28eec80d95868a040c38a00c9caa6c238076983/comm/commands.c#L376
     data class VescValues(
         var avgMotorCurrent: Float = 0f,
         var avgInputCurrent: Float = 0f,
@@ -56,7 +58,28 @@ class FloatyStatsService : Service() {
         var tempMotor: Float = 0f,
         var pidPos: Float = 0f,
     )
-    var data = VescValues();
+    var vescValues = VescValues();
+    data class VescFloatValues(
+        var pidOutput: Float = 0f,
+        var pitchAngle: Float = 0f,
+        var rollAngle: Float = 0f,
+        var state: Int = 0,
+        var switchState: Int = 0,
+        var adc1: Float = 0f,
+        var adc2: Float = 0f,
+        var setPoint: Float = 0f,
+        var atr: Float = 0f,
+        var brakeTilt: Float = 0f,
+        var torqueTilt: Float = 0f,
+        var turnTilt: Float = 0f,
+        var inputTilt: Float = 0f,
+        var truePitchAngle: Float = 0f,
+        var atrFilteredCurrent: Float = 0f,
+        var accDiff: Float = 0f,
+        var appliedBoosterCurrent: Float = 0f,
+        var motorCurrent: Float = 0f,
+    )
+    var vescFloatValues = VescFloatValues();
 
     fun shutdown() {
         ConnectionManager.unregisterListener(connectionEventListener)
@@ -132,6 +155,13 @@ class FloatyStatsService : Service() {
             BluetoothGattCharacteristic(vescCommandUUID, 12, 0),
             encodeVescMessage(vescCommandGetValues)
         ), 0, 500)
+
+        timer.scheduleAtFixedRate(writeCharacteristic(
+            device,
+            BluetoothGattCharacteristic(vescCommandUUID, 12, 0),
+            encodeVescMessage(vescCommandGetBalanceValues)
+        ), 0, 500)
+
 
         return START_NOT_STICKY;
     }
@@ -225,26 +255,53 @@ class FloatyStatsService : Service() {
 
     fun decodeMessageAndBroadcast(message: ByteArray) {
 
-        when(message[0].toInt()) {
-            0x04 -> {
+        when(message[0].toUByte()) {
+            vescCommandGetValues[0] -> {
                 val buffer = ByteBuffer.wrap(message)
-                data.tempMosfet = buffer.getShort(1).toFloat()/10.0f
-                data.tempMotor = buffer.getShort(3).toFloat()/10.0f
-                data.avgMotorCurrent = buffer.getInt(5).toFloat()/100.0f
-                data.avgInputCurrent = buffer.getInt(9).toFloat()/100.0f
-                data.dutyCycleNow = buffer.getShort(21).toFloat()/1000.0f
-                data.rpm = buffer.getInt(23).toFloat()
-                data.inpVoltage = buffer.getShort(27).toFloat()/10.0f
-                data.ampHours = buffer.getInt(29).toFloat()/10000.0f
-                data.ampHoursCharged = buffer.getInt(33).toFloat()/10000.0f
-                data.wattHours = buffer.getInt(37).toFloat()/10000.0f
-                data.wattHoursCharged = buffer.getInt(41).toFloat()/10000.0f
-                data.tachometer = buffer.getInt(45)
-                data.tachometerAbs = buffer.getInt(49)
-                Timber.d("GOT VALUES ${data.toString()}")
+                vescValues.tempMosfet = buffer.getShort(1).toFloat()/10.0f
+                vescValues.tempMotor = buffer.getShort(3).toFloat()/10.0f
+                vescValues.avgMotorCurrent = buffer.getInt(5).toFloat()/100.0f
+                vescValues.avgInputCurrent = buffer.getInt(9).toFloat()/100.0f
+                vescValues.dutyCycleNow = buffer.getShort(21).toFloat()/1000.0f
+                vescValues.rpm = buffer.getInt(23).toFloat()
+                vescValues.inpVoltage = buffer.getShort(27).toFloat()/10.0f
+                vescValues.ampHours = buffer.getInt(29).toFloat()/10000.0f
+                vescValues.ampHoursCharged = buffer.getInt(33).toFloat()/10000.0f
+                vescValues.wattHours = buffer.getInt(37).toFloat()/10000.0f
+                vescValues.wattHoursCharged = buffer.getInt(41).toFloat()/10000.0f
+                vescValues.tachometer = buffer.getInt(45)
+                vescValues.tachometerAbs = buffer.getInt(49)
+                Timber.d("GOT VALUES ${vescValues.toString()}")
 
                 var intent = Intent("com.prozach.floaty.android.stats");
-                intent.putExtra("data", Gson().toJson(data));
+                intent.putExtra("vescValues", Gson().toJson(vescValues));
+                sendBroadcast(intent)
+            }
+            vescCommandGetBalanceValues[0] -> {
+//                https://github.com/vedderb/vesc_pkg/blob/b3927886511734c990de232da75d5efc3f94fdeb/float/float/float.c#L1880
+                val buffer = ByteBuffer.wrap(message)
+                vescFloatValues.pidOutput = buffer.getFloat(3)
+                vescFloatValues.pitchAngle = buffer.getFloat(7)
+                vescFloatValues.rollAngle = buffer.getFloat(11)
+                vescFloatValues.state = buffer.get(15).toInt()
+                vescFloatValues.switchState = buffer.get(16).toInt()
+                vescFloatValues.adc1 = buffer.getFloat(17)
+                vescFloatValues.adc2 = buffer.getFloat(21)
+                vescFloatValues.setPoint = buffer.getFloat(25)
+                vescFloatValues.atr = buffer.getFloat(29)
+                vescFloatValues.brakeTilt = buffer.getFloat(33)
+                vescFloatValues.torqueTilt = buffer.getFloat(37)
+                vescFloatValues.turnTilt = buffer.getFloat(41)
+                vescFloatValues.inputTilt = buffer.getFloat(45)
+                vescFloatValues.truePitchAngle = buffer.getFloat(49)
+                vescFloatValues.atrFilteredCurrent = buffer.getFloat(53)
+                vescFloatValues.accDiff = buffer.getFloat(57)
+                vescFloatValues.appliedBoosterCurrent = buffer.getFloat(61)
+                vescFloatValues.motorCurrent = buffer.getFloat(65)
+                Timber.d("GOT BALANCE VALUES ${vescFloatValues.toString()}")
+
+                var intent = Intent("com.prozach.floaty.android.stats");
+                intent.putExtra("vescFloatValues", Gson().toJson(vescFloatValues));
                 sendBroadcast(intent)
             }
         }
